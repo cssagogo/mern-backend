@@ -14,8 +14,7 @@ app.use("/api/places", placesRoutes);
 app.use("/api/users", usersRoutes);
 
 app.use("/", (req, res, next) => {
-  const error = new HttpError("Could not fine this route.", 404);
-  throw error;
+  return next(new HttpError("Could not fine this route.", 404));
 });
 
 app.use((error, req, res, next) => {
