@@ -1,4 +1,6 @@
 require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -10,6 +12,9 @@ const HttpError = require("./models/http-error");
 const app = express();
 
 app.use(bodyParser.json());
+
+// Allow static directory access to image uploads
+app.use('/uploads/images', express.static(path.join("uploads","images")));
 
 app.use((req, res, next) => {
   // TODO: Will need to lock this down later.
@@ -31,6 +36,13 @@ app.use("/", (req, res, next) => {
 });
 
 app.use((error, req, res, next) => {
+  // This if statement is meant to handle image uploads on errors.
+  if (req.file) {
+    fs.unlink(req.file.path, (err) => {
+      console.log(err);
+    });
+  }
+  // Standard error handling.
   if (res.headerSent) {
     return next(error);
   }
@@ -38,6 +50,7 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occurred." });
 });
 
+// Mongo DB connection
 mongoose
   .connect(
     `mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_AUTH}@cluster0.hphksck.mongodb.net/mern?retryWrites=true&w=majority`
